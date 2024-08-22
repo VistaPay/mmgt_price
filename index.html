@@ -68,12 +68,12 @@
                     const result = await getPrice(tokenAddress);
 
                     // Return the result as JSON
-                    document.body.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+                    document.body.innerHTML = JSON.stringify(result, null, 2);
                 } else {
-                    document.body.innerHTML = `<pre>{"error": "Token not found"}</pre>`;
+                    document.body.innerHTML = JSON.stringify({ error: "Token not found" }, null, 2);
                 }
             } else {
-                document.body.innerHTML = `<pre>{"error": "No token specified"}</pre>`;
+                document.body.innerHTML = JSON.stringify({ error: "No token specified" }, null, 2);
             }
         }
 
