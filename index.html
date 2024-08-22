@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Price API</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+</head>
+<body>
+    <script>
+        async function getPrice(tokenAddress) {
+            const web3 = new Web3('https://bsc-dataseed.binance.org/');
+
+            // PancakeSwap Router V2 Contract
+            const routerAddress = '0x10ED43C718714eb63d5aA57B78B54704E256024E';
+            const routerAbi = [
+                {
+                    "constant": true,
+                    "inputs": [
+                        { "name": "amountIn", "type": "uint256" },
+                        { "name": "path", "type": "address[]" }
+                    ],
+                    "name": "getAmountsOut",
+                    "outputs": [
+                        { "name": "amounts", "type": "uint256[]" }
+                    ],
+                    "payable": false,
+                    "stateMutability": "view",
+                    "type": "function"
+                }
+            ];
+            const routerContract = new web3.eth.Contract(routerAbi, routerAddress);
+
+            const wbnbAddress = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
+            const usdtAddress = '0x55d398326f99059fF775485246999027B3197955'; // USDT BEP-20
+
+            try {
+                // Amount of your token (1 token with correct decimals)
+                const amountIn = web3.utils.toWei('1', 'ether'); // Adjust 'ether' if your token has different decimals
+
+                // Define the path: Token -> WBNB -> USDT
+                const path = [tokenAddress, wbnbAddress, usdtAddress];
+
+                // Fetch amounts out
+                const amountsOut = await routerContract.methods.getAmountsOut(amountIn, path).call();
+
+                // The output amount in USDT
+                const amountOutUsdt = web3.utils.fromWei(amountsOut[amountsOut.length - 1], 'ether'); // USDT has 18 decimals on BSC
+
+                return { priceUsd: parseFloat(amountOutUsdt).toFixed(4) };
+            } catch (error) {
+                return { error: 'Error fetching price', details: error.message };
+            }
+        }
+
+        async function main() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenSymbol = urlParams.get('token');
+
+            if (tokenSymbol) {
+                const tokenAddresses = {
+                    'mmgt': '0xD86A046ED8a235bea8773e804d4cC50F5676FE2c'
+                    // Add other token addresses here if needed
+                };
+
+                if (tokenAddresses[tokenSymbol.toLowerCase()]) {
+                    const tokenAddress = tokenAddresses[tokenSymbol.toLowerCase()];
+                    const result = await getPrice(tokenAddress);
+
+                    // Return the result as JSON
+                    document.body.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+                } else {
+                    document.body.innerHTML = `<pre>{"error": "Token not found"}</pre>`;
+                }
+            } else {
+                document.body.innerHTML = `<pre>{"error": "No token specified"}</pre>`;
+            }
+        }
+
+        main();
+    </script>
+</body>
+</html>
